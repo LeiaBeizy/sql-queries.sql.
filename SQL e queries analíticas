@@ -1,0 +1,71 @@
+-- =========================================================================
+-- PROJETO DE ANÁLISE DE CRÉDITO - ESTRUTURA E CONSULTAS DE NEGÓCIO
+-- Objetivo: Demonstrar competências em SQL para extração e análise de risco.
+-- =========================================================================
+
+-- 1. Criação da Tabela de Clientes
+CREATE TABLE clientes (
+    cliente_id INT PRIMARY KEY,
+    nome VARCHAR(100),
+    idade INT,
+    rendimento_mensal DECIMAL(10, 2),
+    score_credito INT
+);
+
+-- 2. Criação da Tabela de Pedidos de Crédito
+CREATE TABLE pedidos_credito (
+    pedido_id INT PRIMARY KEY,
+    cliente_id INT,
+    valor_pedido DECIMAL(10, 2),
+    estado_pedido VARCHAR(20), -- 'Aprovado' ou 'Rejeitado'
+    data_pedido DATE,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id)
+);
+
+-- =========================================================================
+-- QUERIES ANALÍTICAS (MÉTRICAS DE NEGÓCIO)
+-- =========================================================================
+
+-- Query A: Filtrar clientes de alto risco (Score abaixo de 500) com rendimento alto
+-- Justificação: Identifica potenciais fraudes ou perfis de sobre-endividamento.
+SELECT 
+    nome, 
+    idade, 
+    rendimento_mensal, 
+    score_credito
+FROM clientes
+WHERE score_credito < 500 
+  AND rendimento_mensal > 5000
+ORDER BY rendimento_mensal DESC;
+
+
+-- Query B: Taxa de Aprovação de Crédito por Faixa Etária
+-- Justificação: Permite ao banco perceber qual o segmento de idade com maior sucesso.
+SELECT 
+    CASE 
+        WHEN c.idade < 30 THEN '18-29 anos'
+        WHEN c.idade BETWEEN 30 AND 50 THEN '30-50 anos'
+        ELSE 'Mais de 50 anos'
+    END AS faixa_etaria,
+    COUNT(p.pedido_id) AS total_pedidos,
+    SUM(CASE WHEN p.estado_pedido = 'Aprovado' THEN 1 ELSE 0 END) AS pedidos_aprovados,
+    ROUND(SUM(CASE WHEN p.estado_pedido = 'Aprovado' THEN 1 ELSE 0 END) * 100.0 / COUNT(p.pedido_id), 2) AS taxa_aprovacao_percentual
+FROM clientes c
+JOIN pedidos_credito p ON c.cliente_id = p.cliente_id
+GROUP BY 
+    CASE 
+        WHEN c.idade < 30 THEN '18-29 anos'
+        WHEN c.idade BETWEEN 30 AND 50 THEN '30-50 anos'
+        ELSE 'Mais de 50 anos'
+    END;
+
+
+-- Query C: Volume Total de Crédito Concedido e Média de Score dos Aprovados
+-- Justificação: Métrica macro para o relatório mensal da administração do banco.
+SELECT 
+    COUNT(pedido_id) AS total_creditos_emitidos,
+    SUM(valor_pedido) AS volume_total_liberado,
+    ROUND(AVG(c.score_credito), 0) AS score_medio_clientes_aprovados
+FROM pedidos_credito p
+JOIN clientes c ON p.cliente_id = c.cliente_id
+WHERE p.estado_pedido = 'Aprovado';
