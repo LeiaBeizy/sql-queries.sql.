@@ -1,2 +1,1 @@
-# sql-queries.sql.
-# Próximos Passos
+# sql-queries.sql
