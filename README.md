@@ -23,3 +23,8 @@ GROUP BY
         ELSE 'Mais de 50 anos'
     END;
 ```
+### 📈 Visualização dos Resultados
+
+O script Python gera automaticamente o seguinte gráfico com base nos dados tratados pela query:
+
+![Taxa de Aprovação por Faixa Etária](grafico_taxa_aprovacao.png)
